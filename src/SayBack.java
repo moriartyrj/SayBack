@@ -35,6 +35,9 @@ import java.awt.geom.Line2D;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.border.*;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 import java.util.Enumeration;
 import java.io.*;
@@ -63,25 +66,64 @@ public class SayBack extends JPanel {
 	Recorder initRecorder;
 	Recorder guessRecorder;
 	static JLabel scoreLabel;
-	static int score = 30;;
-	
+	static JLabel versionLabel;
+	static int score = 30;
+	static int dataCount;
+	static Map<Integer, String> dataMap;
+	static String version = "v0.2";
 	
 	
 	public SayBack() {
-		initRecorder = new Recorder();
-		guessRecorder = new Recorder();
+		initRecorder = new Recorder(true);
+		guessRecorder = new Recorder(false);
 		
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		
-		scoreLabel = new JLabel();
-        
-        
 		add(initRecorder);
 		add(guessRecorder);
 		
+		JPanel bottomPanel = new JPanel();
+		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
+		bottomPanel.setSize(new Dimension(400,25));
+		bottomPanel.setBorder(new EmptyBorder(10,0,5,0));
+		
+		
+		scoreLabel = new JLabel();
 		scoreLabel.setSize(100, 500);
 		scoreLabel.setText("Score: " + score);
-		add(scoreLabel);
+		bottomPanel.add(scoreLabel);
+		
+		versionLabel = new JLabel();
+		versionLabel.setText(version);
+		versionLabel.setHorizontalAlignment(versionLabel.RIGHT);
+		versionLabel.setHorizontalTextPosition(versionLabel.RIGHT);
+		//bottomPanel.add(versionLabel);
+		
+		add(bottomPanel);
+		
+		dataMap = new HashMap<Integer, String>();
+		dataCount = 0;
+
+		try {
+			File dataFile = new File("data/soundMap.dat");
+			FileReader fr = new FileReader(dataFile);
+			BufferedReader in = new BufferedReader(fr);
+			
+			String line = null;
+			String[] lineData = new String[2];
+			while ((line = in.readLine()) != null) {
+				 lineData = line.split(",");
+				 dataMap.put(Integer.parseInt(lineData[0]),lineData[1]);
+				 dataCount++;
+			}
+			in.close();
+			fr.close();
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
 		
 	}
@@ -94,6 +136,8 @@ public class SayBack extends JPanel {
         FormatControls formatControls = new FormatControls();
         Capture capture = new Capture();
         Playback playback = new Playback();
+        
+        Boolean topPanel;
         
         AudioInputStream audioInputStream;
         SamplingGraph samplingGraph;
@@ -111,7 +155,8 @@ public class SayBack extends JPanel {
         boolean forward = true;
 
         	
-	    public Recorder() {
+	    public Recorder(Boolean topPanel) {
+	    	this.topPanel = topPanel;
 	        setLayout(new BorderLayout());
 	        EmptyBorder eb = new EmptyBorder(5,5,5,5);
 	        SoftBevelBorder sbb = new SoftBevelBorder(SoftBevelBorder.LOWERED);
@@ -130,7 +175,6 @@ public class SayBack extends JPanel {
 	        playB = addButton("Play", buttonsPanel, false);
 	        captB = addButton("Record", buttonsPanel, true);
 	        pausB = addButton("Pause", buttonsPanel, false);
-	        loadB = addButton("Generate", buttonsPanel, true);
 	        reverseB = addButton("Flip It!", buttonsPanel, true);
 	        p2.add(buttonsPanel);
 	
@@ -140,22 +184,24 @@ public class SayBack extends JPanel {
 	        samplingPanel.add(samplingGraph = new SamplingGraph());
 	        p2.add(samplingPanel);
 	        
-	        JPanel savePanel = new JPanel();
-	        savePanel.setLayout(new BoxLayout(savePanel, BoxLayout.Y_AXIS));
-	     
-	        JPanel saveTFpanel = new JPanel();
-	        saveTFpanel.add(new JLabel("File to save:  "));
-	        saveTFpanel.add(textField = new JTextField(fileName));
-	        textField.setPreferredSize(new Dimension(140,25));
-	        savePanel.add(saveTFpanel);
-
-	        JPanel saveBpanel = new JPanel();
-	        auB = addButton("Save AU", saveBpanel, false);
-	        aiffB = addButton("Save AIFF", saveBpanel, false);
-	        waveB = addButton("Save WAVE", saveBpanel, false);
-	        savePanel.add(saveBpanel);
-
-	        p2.add(savePanel);
+	        if(topPanel) {
+	        	loadB = addButton("Generate", buttonsPanel, true);
+	        	
+		        JPanel savePanel = new JPanel();
+		        savePanel.setLayout(new BoxLayout(savePanel, BoxLayout.Y_AXIS));
+		     
+		        JPanel saveTFpanel = new JPanel();
+		        saveTFpanel.add(new JLabel("Save word:  "));
+		        saveTFpanel.add(textField = new JTextField(fileName));
+		        textField.setPreferredSize(new Dimension(140,25));
+		        savePanel.add(saveTFpanel);
+	
+		        JPanel saveBpanel = new JPanel();
+		        auB = addButton("Save", saveBpanel, false);
+		        savePanel.add(saveBpanel);
+	
+		        p2.add(savePanel);
+	        }
 	        
 	        
 	
@@ -207,18 +253,28 @@ public class SayBack extends JPanel {
 	    public void actionPerformed(ActionEvent e) {
 	        Object obj = e.getSource();
 	        if (obj.equals(auB)) {
-	            saveToFile(textField.getText().trim(), AudioFileFormat.Type.AU);
-	        } else if (obj.equals(aiffB)) {
+	        	if(textField.getText().isEmpty()){
+	        		reportStatus("File name is blank");
+	        	} else {
+	        		textField.setText(textField.getText().replaceAll("[^a-zA-Z0-9]",""));
+	        		String fileName = textField.getText();
+	        		saveToFile(fileName, AudioFileFormat.Type.AU);
+	        	}
+	       /* } else if (obj.equals(aiffB)) {
 	            saveToFile(textField.getText().trim(), AudioFileFormat.Type.AIFF);
-	        } else if (obj.equals(waveB)) {
-	            saveToFile(textField.getText().trim(), AudioFileFormat.Type.WAVE);
-	        } else if (obj.equals(playB)) {
+	        else if (obj.equals(waveB)) {
+	            saveToFile(textField.getText().trim(), AudioFileFormat.Type.WAVE);*/
+	        } 
+	        else if (obj.equals(playB)) {
 	            if (playB.getText().startsWith("Play")) {
 	                playback.start();
 	                samplingGraph.start();
 	                captB.setEnabled(false);
 	                pausB.setEnabled(true);
 	                reverseB.setEnabled(false);
+	                if(topPanel) {
+	                	auB.setEnabled(false);
+	                }
 	                playB.setText("Stop");
 	                score--;
 	                scoreLabel.setText("Score: " + score);
@@ -228,6 +284,9 @@ public class SayBack extends JPanel {
 	                captB.setEnabled(true);
 	                pausB.setEnabled(false);
 	                reverseB.setEnabled(true);
+	                if (topPanel) {
+	                	auB.setEnabled(true);
+	                }
 	                playB.setText("Play");
 	            }
 	        } else if (obj.equals(captB)) {
@@ -238,9 +297,13 @@ public class SayBack extends JPanel {
 	                samplingGraph.start();
 	                //loadB.setEnabled(false);
 
-	                auB.setEnabled(true);
-	                aiffB.setEnabled(true);
-	                waveB.setEnabled(true);
+	                // waveB.setEnabled(true);
+	                // aiffB.setEnabled(true);
+	                if(topPanel) {
+	                	auB.setEnabled(false);
+	                	score = 30;
+	                	scoreLabel.setText("Score: " + score);
+	                }
 	                playB.setEnabled(false);
 	                pausB.setEnabled(true);
 	                reverseB.setEnabled(false);
@@ -250,6 +313,10 @@ public class SayBack extends JPanel {
 	                capture.stop();
 	                samplingGraph.stop();
 	                //loadB.setEnabled(true);
+	                if(topPanel) {
+	                	auB.setEnabled(true);
+	                }
+	                
 	                playB.setEnabled(true);
 	                pausB.setEnabled(false);
 	                reverseB.setEnabled(true);
@@ -279,12 +346,18 @@ public class SayBack extends JPanel {
 	            }
 	        } else if (obj.equals(loadB)) {
 	            try {
+	            	if(topPanel) {
+	            		score = 30;
+	            		scoreLabel.setText("Score: " + score);
+	            	}
 	            	Random generator = new Random();
-	            	int r = generator.nextInt(4) + 1;
-//	            	File file = new File("/Users/rmoriarty/Java/SayBack/bin/word3.au");
+	            	int r = generator.nextInt(dataCount) + 1;
+	            	String filename = dataMap.get(r);
+	            	String folder = System.getProperty("user.dir");
+	            	File file = new File(System.getProperty("user.dir") + "/sounds/" + filename + ".au");
 //	            	createAudioInputStream(file, true);
-	                URL url = this.getClass().getResource( "word" + r + ".au" );
-	                File file = new File(url.getPath());
+//	                URL url = this.getClass().getResource( "word" + r + ".au" );
+//	                File file = new File(url.getPath());
 	                createAudioInputStream(file, true);
 	                
 	                
@@ -383,11 +456,20 @@ public class SayBack extends JPanel {
 	            return;
 	        }
 	
-	        File file = new File(fileName = name);
+	        File file = new File(System.getProperty("user.dir") + "/sounds/" + name + ".au");
 	        try {
 	            if (AudioSystem.write(audioInputStream, fileType, file) == -1) {
 	                throw new IOException("Problems writing to file");
 	            }
+	            File dataFile = new File("data/soundMap.dat");
+				FileWriter fw = new FileWriter(dataFile,true);
+				BufferedWriter out = new BufferedWriter(fw);
+				
+				out.append(String.valueOf(dataCount + 1) + "," + name + "\n");
+				out.close();
+				fw.close();
+				dataCount++;
+				
 	        } catch (Exception ex) { reportStatus(ex.toString()); }
 	        samplingGraph.repaint();
 	    }
@@ -634,8 +716,8 @@ public class SayBack extends JPanel {
 	                pausB.setEnabled(false);
 	                reverseB.setEnabled(true);
 	                auB.setEnabled(true);
-	                aiffB.setEnabled(true);
-	                waveB.setEnabled(true);
+	                // aiffB.setEnabled(true);
+	                // waveB.setEnabled(true);
 	                captB.setText("Record");
 	                System.err.println(errStr);
 	                samplingGraph.repaint();
