@@ -1,73 +1,20 @@
-The classes for the Java Sound demo are contained in the JavaSoundDemo.jar 
-file.  Running the demo requires the Java 2 SDK, Standard Edition 1.3.
-To run the Java Sound demo :
+************************
+SayBack
+v 0.2
+April 22, 2012
+Written by Ryan Moriarty
+Built on Java Sound API JavaSoundDemo: http://java.sun.com/products/java-media/sound/samples/JavaSoundDemo/
 
-% java -jar JavaSoundDemo.jar
+You need Java installed on your computer to run SayBack.
+You can download it from this link: http://java.com/en/download/index.jsp
 
-Although it's not necessary to unpack the JavaSoundDemo.jar file to run 
-the demo, you may want to extract its contents if you plan to modify
-any of the demo source code. To extract the contents of JavaSoundDemo.jar, 
-run this command from the JavaSound directory :
+1. Press the Record button in the top panel to record a word, then hit Stop
+2. Press the Flip it! button to reverse the sound. 
+3. Have somebody listen to the reversed sound.
+4. Have that somebody attempt to reproduce the sound in the bottom recorder
+5. Press the Flip It! button in the bottom panel. The sound will now resemble the original word
+6. The player must guess what the original word was before their score (at the bottom of the window) hits 0.
 
-    jar xvf JavaSoundDemo.jar
-
-
-This JavaSound demo consists of a set of demos housed in one GUI 
-framework that uses a JTabbedPane.  You can access different groups of 
-demos by clicking the tabs at the top of the pane. There are demo 
-groups for Juke Box, Capture & Playback, Midi Synthesizer and Rhythm
-Groove Box.
-
-Juke Box :
-
-    A Juke Box for sampled (au, wav, aif) and midi (rmf, midi) sound 
-    files.  Features duration progress, seek slider, pan and volume 
-    controls.  
-
-
-Capture & Playback :
-
-    A Capture/Playback sample.  Record audio in different formats
-    and then playback the recorded audio.  The captured audio can 
-    be saved either as a WAVE, AU or AIFF.  Or load an audio file
-    for streaming playback.
-
-
-Midi Synthesizer :
-
-    Illustrates general MIDI melody instruments and MIDI controllers.
-    A piano keyboard represents notes on and off.  Features capture
-    and playback of note on and off events. 
-
-
-Rhythm Groove Box :
-
-    Illustrates how to build a track of short events.  Features
-    a tempo dial to increase or descrease the beats per minute.
-
-
-You can run anyone of the samples in stand-alone mode by issuing a 
-commands like this from the JavaSound directory:
-
-        java -cp JavaSoundDemo.jar Juke 
-        java -cp JavaSoundDemo.jar CapturePlayback
-        java -cp JavaSoundDemo.jar MidiSynth
-        java -cp JavaSoundDemo.jar Groove
-
-
-When running the Java Sound demo as an applet these permissions
-are necessary in order to load/save files and record audio :  
-
-grant {
-  permission java.io.FilePermission "<<ALL FILES>>", "read, write";
-  permission javax.sound.sampled.AudioPermission "record";
-  permission java.util.PropertyPermission "user.dir", "read";
-};
-
-The permissions need to be added to the .java.policy file.
-
-======================================================================
-
-You may send comments via the javasound-comments@sun.com alias, 
-which is a one-way alias to Sun's Java Sound API developers, or via the
-javasound-interest@sun.com alias, which is a public discussion list. 
+To save yoruself the trouble of recording a sound, press the Generate button to load up a pre-recorded word.
+The initial word bank is small, but you can save your own by typing the word in the box at the bottom of the top panel and 
+hitting the Save button.
